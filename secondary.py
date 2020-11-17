@@ -19,10 +19,11 @@ class Secondary(BaseHTTPRequestHandler):
     def do_POST(self):
         content_len = int(self.headers.get('content-length'))
         post_body = self.rfile.read(content_len)
+        print(f"Received POST request: {post_body}")
         data = json.loads(post_body)
         response_delay = data.get('response_delay', 1)
         time.sleep(response_delay)
-        new_message = data.get('new_message')
+        new_message = data.get('log')
         if not new_message:
             self.send_response(400)
             self.end_headers()
@@ -31,6 +32,7 @@ class Secondary(BaseHTTPRequestHandler):
             }).encode())
             return
         self.log_messages.append(new_message)
+        print(f"Append new message: {new_message}")
         self.send_response(200)
         self.end_headers()
         self.wfile.write(json.dumps({

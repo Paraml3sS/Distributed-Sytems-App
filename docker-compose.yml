@@ -1,5 +1,19 @@
+version: "2"
 services:
-  web:
+  master:
     build: .
+    image: distributed
     ports:
-      - "8123:8000"
+      - "8000:8000"
+    command: "python main.py -s http://secondary1:8000/ -s http://secondary2:8000/"
+
+  secondary1:
+    image: distributed
+    ports:
+      - "8001:8000"
+    command: "python secondary.py"
+  secondary2:
+    image: distributed
+    ports:
+      - "8002:8000"
+    command: "python secondary.py"
