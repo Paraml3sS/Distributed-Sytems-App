@@ -16,7 +16,7 @@ def run_server(handler_class, server_class=HTTPServer, addr="0.0.0.0", port=8000
 
 
 if __name__ == '__main__':
-    # Run master with configured secondary nodes as for e.g "-s http://localhost:8001/ -s http://localhost:8002/"
+    # Run master with configured secondary nodes as for e.g "-s http://localhost:5001/ -s http://localhost:5002/"
     parser = argparse.ArgumentParser(description='Starts master node')
     parser.add_argument('-s', '--secondaries', type=str, action='append', help='secondary servers addresses')
     parser.add_argument('-p', '--port', type=int, help='set receiving port', default=8000)
