@@ -24,7 +24,8 @@ class HandlersFactory(object):
 
                 for server in secondaries:
                     print(f"Send update for secondary server on {server}")
-                    requests.post(server, json.dumps(response))
+                    resp = requests.post(server, json.dumps(response))
+                    print(f"Received response from secondary server {resp.content}")
 
                 print(f"Updated secondaries")
 

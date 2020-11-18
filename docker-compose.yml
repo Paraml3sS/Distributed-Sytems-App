@@ -5,15 +5,15 @@ services:
     image: distributed
     ports:
       - "8000:8000"
-    command: "python main.py -s http://secondary1:8000/ -s http://secondary2:8000/"
+    command: "python main.py -s http://secondary1:5000/ -s http://secondary2:5000/"
 
   secondary1:
     image: distributed
     ports:
-      - "8001:8000"
+      - "8001:8000" # public port
     command: "python secondary.py"
   secondary2:
     image: distributed
     ports:
-      - "8002:8000"
+      - "8002:8000" # public port
     command: "python secondary.py"
