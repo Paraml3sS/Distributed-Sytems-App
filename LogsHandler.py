@@ -3,7 +3,7 @@ import json
 
 import requests
 
-logs = ["existing log"]
+logs = []
 
 
 class HandlersFactory(object):
