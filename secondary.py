@@ -1,5 +1,6 @@
 import argparse
 import json
+import random
 import time
 from http.server import BaseHTTPRequestHandler
 
@@ -26,16 +27,13 @@ class SecondaryInternal(BaseHTTPRequestHandler):
         post_body = self.rfile.read(content_len)
         print(f"Received POST request: {post_body}")
         data = json.loads(post_body)
-        response_delay = data.get('response_delay', 1)
-        time.sleep(response_delay)
-        new_message = data.get('log')
-        if not new_message:
-            self.send_response(400)
-            self.end_headers()
-            self.wfile.write(json.dumps({
-                'request_data': data,
-            }).encode())
+
+        if self.emulate_error('saving error', 0.3):
             return
+
+        self.emulate_delay(data)
+
+        new_message = data.get('log')
         log_messages.append(new_message)
         print(f"Append new message: {new_message}")
         self.send_response(200)
@@ -46,6 +44,19 @@ class SecondaryInternal(BaseHTTPRequestHandler):
             'log_messages': log_messages
         }).encode())
         return
+
+    def emulate_error(self, error_message, probability):
+        if random.random() < probability:
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                'error': error_message,
+            }).encode())
+            return True
+
+    def emulate_delay(self, request_data):
+        response_delay = request_data.get('response_delay', random.random() * 3)
+        time.sleep(response_delay)
 
 
 if __name__ == '__main__':
