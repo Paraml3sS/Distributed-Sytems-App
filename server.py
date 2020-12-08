@@ -1,13 +1,18 @@
 import time
 from http.server import HTTPServer
+from socketserver import ThreadingMixIn
 from threading import Thread
+
+
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    pass
 
 
 class MultiServer(object):
     _threads = []  # list of tuples, where 0 - thread, 1 - http server
 
     def add(self, ip_address, port, handler):
-        httpd = HTTPServer((ip_address, port), handler)
+        httpd = ThreadedHTTPServer((ip_address, port), handler)
         self._threads.append((Thread(target=__run__, args=[httpd]), httpd))
 
     def run(self):  # starts servers and waits until interruption to shutdown
@@ -27,11 +32,9 @@ class MultiServer(object):
 
 
 def __run__(httpd):
-    print(f'Staring {httpd.RequestHandlerClass} on {httpd.server_address}')
+    print(f'Starting {httpd.RequestHandlerClass} on {httpd.server_address}')
     httpd.serve_forever()
 
 
 def run(ip_address, port, handler):
-    httpd = HTTPServer((ip_address, port), handler)
-    print(f'Staring {handler} on http://{ip_address}:{port}')
-    httpd.serve_forever()
+    __run__(ThreadedHTTPServer((ip_address, port), handler))
