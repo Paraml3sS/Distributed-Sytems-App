@@ -36,6 +36,7 @@ class SecondaryInternal(BaseHTTPRequestHandler):
         new_message = data.get('log')
         log_messages.append(new_message)
         print(f"Append new message: {new_message}")
+
         self.send_response(200)
         self.end_headers()
         self.wfile.write(json.dumps({
@@ -55,7 +56,7 @@ class SecondaryInternal(BaseHTTPRequestHandler):
             return True
 
     def emulate_delay(self, request_data):
-        response_delay = request_data.get('response_delay', random.random() * 3)
+        response_delay = request_data.get('response_delay', random.random() * 10)
         time.sleep(response_delay)
 
 

@@ -5,7 +5,7 @@ services:
     image: distributed
     ports:
       - "8000:8000"
-    command: "python main.py -s http://secondary1:5000/ -s http://secondary2:5000/"
+    command: "python main-server.py -s http://secondary1:5000/ -s http://secondary2:5000/"
 
   secondary1:
     depends_on:
@@ -13,11 +13,11 @@ services:
     image: distributed
     ports:
       - "8001:8000" # public port
-    command: "python secondary.py"
+    command: "python secondary-server.py"
   secondary2:
     depends_on:
       - master
     image: distributed
     ports:
       - "8002:8000" # public port
-    command: "python secondary.py"
+    command: "python secondary-server.py"
