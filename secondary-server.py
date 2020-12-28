@@ -8,6 +8,7 @@ from server import MultiServer
 
 
 log_messages = []
+last_valid_message = -1
 
 
 class SecondaryPublic(BaseHTTPRequestHandler):
@@ -16,7 +17,7 @@ class SecondaryPublic(BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(json.dumps({
-            'log_messages': log_messages
+            'log_messages': log_messages[0:last_valid_message]
         }).encode())
         return
 
@@ -33,13 +34,7 @@ class SecondaryInternal(BaseHTTPRequestHandler):
             return
 
         self.emulate_delay(data)
-
-        if any(data.get('counter') == message.get('counter') for message in log_messages):
-            print(f"Message already exists : {data}")
-        else:
-            log_messages.append(data)
-            print(f"Append new message: {data}")
-
+        self.append(data)
 
         if self.emulate_error('error after saving', data):
             return
@@ -52,10 +47,27 @@ class SecondaryInternal(BaseHTTPRequestHandler):
         }).encode())
         return
 
+    @staticmethod
+    def append(data):
+        global last_valid_message
+        current_counter = data.get('counter')
+
+        if (len(log_messages[0:last_valid_message]) + 1) == current_counter:
+            last_valid_message = current_counter
+
+        if len(log_messages) < current_counter:
+            log_messages.extend([None] * (current_counter - len(log_messages)))
+
+        log_messages[current_counter-1] = data.get('log')
+
+        return data
+
+
     def emulate_error(self, error_message, request_data):
         probability = request_data.get(error_message, 0.3)
 
         if random.random() < probability:
+            print(error_message)
             self.send_response(500)
             self.end_headers()
             self.wfile.write(json.dumps({
