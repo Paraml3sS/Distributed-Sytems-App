@@ -7,7 +7,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Starts master node')
     parser.add_argument('-s', '--secondaries', type=str, action='append', help='secondary servers addresses')
     parser.add_argument('-p', '--port', type=int, help='set receiving port', default=8000)
-    parser.add_argument('-r', '--retries', type=int, help='set retry on cannot replicate to secondary', default=3)
+    parser.add_argument('-r', '--retries', type=int, help='set retry on cannot replicate to secondary', default=10)
     parser.add_argument('-rd', '--retry_delay', type=int, help='set retry delay replicate to secondary', default=1)
     args = parser.parse_args()
     if args.secondaries:

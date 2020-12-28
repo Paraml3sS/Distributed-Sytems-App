@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler
 
 from server import MultiServer
 
+
 log_messages = []
 
 
@@ -28,25 +29,32 @@ class SecondaryInternal(BaseHTTPRequestHandler):
         print(f"Received POST request: {post_body}")
         data = json.loads(post_body)
 
-        if self.emulate_error('saving error', 0.3):
+        if self.emulate_error('error before saving', data):
             return
 
         self.emulate_delay(data)
 
-        new_message = data.get('log')
-        log_messages.append(new_message)
-        print(f"Append new message: {new_message}")
+        if any(data.get('counter') == message.get('counter') for message in log_messages):
+            print(f"Message already exists : {data}")
+        else:
+            log_messages.append(data)
+            print(f"Append new message: {data}")
+
+
+        if self.emulate_error('error after saving', data):
+            return
 
         self.send_response(200)
         self.end_headers()
         self.wfile.write(json.dumps({
             'request_data': data,
-            'new_message': new_message,
             'log_messages': log_messages
         }).encode())
         return
 
-    def emulate_error(self, error_message, probability):
+    def emulate_error(self, error_message, request_data):
+        probability = request_data.get(error_message, 0.3)
+
         if random.random() < probability:
             self.send_response(500)
             self.end_headers()

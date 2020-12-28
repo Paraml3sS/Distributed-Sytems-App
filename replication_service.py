@@ -3,6 +3,7 @@ from threading import Thread
 import json
 import time
 import requests
+from http import HTTPStatus
 
 
 class ReplicationService():
@@ -11,9 +12,13 @@ class ReplicationService():
         self.secondaries = secondaries
         self.retries = retries
         self.retry_delay = retry_delay
+        self.message_counter = 0
 
     def replicate(self, request, concern=None):
+        self.message_counter += 1
         count = CountDownLatch(concern)
+
+        request["counter"] = self.message_counter
 
         for server in self.secondaries:
             Thread(target=self.replicate_on, args=[request, server, count]).start()
@@ -33,11 +38,11 @@ class ReplicationService():
                 resp = requests.post(server, json.dumps(request))
                 print(f"Received response from secondary {server} server {resp} {resp.content}")
 
-                if resp.status_code == 200:
+                if resp.status_code == HTTPStatus.OK:
                     # зменшити лічильник якщо все ок
                     count.count_down()
                     break
-                elif resp.status_code == 500:
+                elif resp.status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
                     # спробувати ще якщо помилка
                     tries -= 1
                     time.sleep(self.retry_delay)
