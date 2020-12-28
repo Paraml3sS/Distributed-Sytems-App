@@ -8,7 +8,6 @@ from server import MultiServer
 
 
 log_messages = []
-last_valid_message = -1
 
 
 class SecondaryPublic(BaseHTTPRequestHandler):
@@ -17,7 +16,7 @@ class SecondaryPublic(BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(json.dumps({
-            'log_messages': log_messages[0:last_valid_message]
+            'log_messages': log_messages[0:log_messages.index(None)]
         }).encode())
         return
 
@@ -49,14 +48,10 @@ class SecondaryInternal(BaseHTTPRequestHandler):
 
     @staticmethod
     def append(data):
-        global last_valid_message
         current_counter = data.get('counter')
 
-        if (len(log_messages[0:last_valid_message]) + 1) == current_counter:
-            last_valid_message = current_counter
-
         if len(log_messages) < current_counter:
-            log_messages.extend([None] * (current_counter - len(log_messages)))
+            log_messages.extend([None] * (current_counter - len(log_messages) + 1))
 
         log_messages[current_counter-1] = data.get('log')
 
