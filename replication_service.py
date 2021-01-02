@@ -1,17 +1,18 @@
-import threading
-from threading import Thread
 import json
-import time
-import requests
+import threading
 from http import HTTPStatus
+from threading import Thread
+
+import requests
+
+from delay import RetryFactory
 
 
 class ReplicationService():
 
-    def __init__(self, secondaries, retries, retry_delay):
+    def __init__(self, secondaries, args):
+        self.retries_factory = RetryFactory(args)
         self.secondaries = secondaries
-        self.retries = retries
-        self.retry_delay = retry_delay
         self.message_counter = 0
 
     def replicate(self, request, concern=None):
@@ -30,10 +31,11 @@ class ReplicationService():
 
 
     def replicate_on(self, request, server, count):
-        tries = self.retries
+        tries = 0
+        retry_delayer = self.retries_factory.build()
 
-        while tries > 0:
-            print(f"Send update for secondary server try {self.retries - tries + 1} on {server}")
+        while True:
+            print(f"Send update for secondary server try {tries + 1} on {server}")
             try:
                 resp = requests.post(server, json.dumps(request))
                 print(f"Received response from secondary {server} server {resp} {resp.content}")
@@ -44,13 +46,13 @@ class ReplicationService():
                     break
                 elif resp.status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
                     # спробувати ще якщо помилка
-                    tries -= 1
-                    time.sleep(self.retry_delay)
+                    tries += 1
+                    retry_delayer.delay()
 
             except requests.exceptions.ConnectionError:  # помилка зв'язку
                 print(f"Connection error with secondary server {server}")
-                tries -= 1
-                time.sleep(self.retry_delay)
+                tries += 1
+                retry_delayer.delay()
 
 
 class CountDownLatch(object):
