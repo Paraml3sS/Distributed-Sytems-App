@@ -3,13 +3,12 @@ import json
 from urllib import parse
 from replication_service import ReplicationService
 
-
 logs = []
 
 
 class HandlersFactory(object):
-    def get_main(self, secondaries, args):
-        replicator = ReplicationService(secondaries, args)
+    def get_main(self, secondaries, arguments):
+        replicator = ReplicationService(secondaries, arguments)
 
         class LogsRequestHandler(BaseHTTPRequestHandler):
 
@@ -55,7 +54,5 @@ class HandlersFactory(object):
                     concern = int(query.get('concern')[0])
                 return concern
 
-
         return LogsRequestHandler
-
 

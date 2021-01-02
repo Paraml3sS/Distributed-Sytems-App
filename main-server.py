@@ -10,8 +10,8 @@ if __name__ == '__main__':
     parser.add_argument('-rd', '--retry_delay', type=int, help='set retry delay replicate to secondary', default=1)
     parser.add_argument('-ri', '--immediate_retry', type=bool, help='set first retry immediate', default=True)
     parser.add_argument('-rs', '--retry_strategy_name', type=str, help='retry strategy name: exponential, incremental, interval', default='interval')
-    args = parser.parse_args()
-    if args.secondaries:
-        servers = args.secondaries
+    arguments = parser.parse_args()
+    if arguments.secondaries:
+        servers = arguments.secondaries
 
-    run(ip_address="0.0.0.0", port=args.port, handler=HandlersFactory().get_main(args.secondaries, args))
+    run(ip_address="0.0.0.0", port=arguments.port, handler=HandlersFactory().get_main(arguments.secondaries, arguments))
