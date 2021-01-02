@@ -8,8 +8,8 @@ logs = []
 
 
 class HandlersFactory(object):
-    def get_main(self, secondaries, retries, retry_delay):
-        replicator = ReplicationService(secondaries, retries, retry_delay)
+    def get_main(self, secondaries, args):
+        replicator = ReplicationService(secondaries, args)
 
         class LogsRequestHandler(BaseHTTPRequestHandler):
 
