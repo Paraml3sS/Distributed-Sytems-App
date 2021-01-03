@@ -3,11 +3,12 @@ import json
 from urllib import parse
 from hearbeats_service import HeartbeatsService
 from replication_service import ReplicationService
+from happy_helper import append, CountUpRequest
 import threading
 
-lock = threading.Condition()
+
 logs = []
-counter = 0
+counter = CountUpRequest(0)
 
 
 class HandlersFactory(object):
@@ -36,16 +37,11 @@ class HandlersFactory(object):
                 request = self._parse_request()
                 concern = self.parse_concern()
 
-                new_message = request["log"]
-
-                with lock:
-                    counter += 1
-                    request['counter'] = counter
-
-                logs.append(new_message)
+                counter.count_up(request)
+                append(request, logs)
                 concern -= 1
 
-                print(f"Append new message: {new_message}")
+                print(f"Append new message: {request}")
                 self.replicator.replicate(request, concern)
 
                 self._set_response()
@@ -71,3 +67,4 @@ class HandlersFactory(object):
                 return concern
 
         return LogsRequestHandler
+
