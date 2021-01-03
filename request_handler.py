@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler
 import json
+import requests
 from urllib import parse
 from replication_service import ReplicationService
 import threading
@@ -21,6 +22,9 @@ class HandlersFactory(object):
 
             def do_GET(self):
                 self._set_response()
+                if self.path == '/health':
+                    print(f"Checking HEALTH status")
+                    self.health_check()
                 self.wfile.write(json.dumps(logs).encode())
 
             def do_POST(self):
@@ -61,5 +65,17 @@ class HandlersFactory(object):
                 if query.get('concern'):
                     concern = int(query.get('concern')[0])
                 return concern
+
+            def health_check(self):
+                responses = []
+                for s in self.replicator.secondaries:
+                    resp = requests.get(s)
+                    responses.append(resp.status_code)
+                if list(set(responses)) == [200]:
+                    print('Healthy')
+                elif 200 in responses:
+                    print('Suspected')
+                else:
+                    print('Unhealthy')
 
         return LogsRequestHandler
