@@ -2,6 +2,7 @@ import argparse
 import json
 import random
 import time
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler
 
 from server import MultiServer
@@ -26,7 +27,7 @@ class SecondaryInternal(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        print(f"Internal HEALTH check")
+        print(f"Beat {datetime.now()}")
         return
 
     def do_POST(self):
