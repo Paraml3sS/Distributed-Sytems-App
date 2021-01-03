@@ -5,12 +5,13 @@ from threading import Thread
 
 import requests
 
-from delay import RetryFactory
+from delay import RetryFactory, RetryDelayer, RegularIntervalRetryStrategy
 
 
 class ReplicationService:
 
-    def __init__(self, secondaries, args):
+    def __init__(self, secondaries, heartbeat_service, args):
+        self.heartbeat_service = heartbeat_service
         self.retries_factory = RetryFactory(args)
         self.secondaries = secondaries
 
@@ -30,6 +31,9 @@ class ReplicationService:
         retry_delayer = self.retries_factory.build()
 
         while True:
+            while not self.heartbeat_service.is_alive(server):
+                RetryDelayer(RegularIntervalRetryStrategy(2)).delay()
+
             print(f"Send update for secondary server try {tries + 1} on {server}")
             try:
                 resp = requests.post(server, json.dumps(request))
