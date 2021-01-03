@@ -50,7 +50,7 @@ class SecondaryInternal(BaseHTTPRequestHandler):
     def append(data):
         current_counter = data.get('counter')
 
-        if len(log_messages) < current_counter:
+        if len(log_messages) <= current_counter:
             log_messages.extend([None] * (current_counter - len(log_messages) + 1))
 
         log_messages[current_counter-1] = data.get('log')
