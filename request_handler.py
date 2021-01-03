@@ -31,7 +31,7 @@ class HandlersFactory(object):
                     secondary_heartbeats = heartbeat_service.get_heartbeats()
                     self.wfile.write(json.dumps(secondary_heartbeats).encode())
                     return
-                self.wfile.write(json.dumps(logs).encode())
+                self.wfile.write(json.dumps(logs[0:logs.index(None)]).encode())
 
             def do_POST(self):
                 global counter
