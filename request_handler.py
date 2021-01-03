@@ -2,8 +2,11 @@ from http.server import BaseHTTPRequestHandler
 import json
 from urllib import parse
 from replication_service import ReplicationService
+import threading
 
+lock = threading.Condition()
 logs = []
+counter = 0
 
 
 class HandlersFactory(object):
@@ -21,25 +24,30 @@ class HandlersFactory(object):
                 self.wfile.write(json.dumps(logs).encode())
 
             def do_POST(self):
-                response = self._get_response()
+                global counter
+                request = self._parse_request()
                 concern = self.parse_concern()
 
-                new_message = response["log"]
+                new_message = request["log"]
+
+                with lock:
+                    counter += 1
+                    request['counter'] = counter
 
                 logs.append(new_message)
                 concern -= 1
 
                 print(f"Append new message: {new_message}")
-                self.replicator.replicate(response, concern)
+                self.replicator.replicate(request, concern)
 
                 self._set_response()
-                self.wfile.write(json.dumps(response).encode())
+                self.wfile.write(json.dumps(request).encode())
 
-            def _get_response(self):
+            def _parse_request(self):
                 length = int(self.headers['content-length'])
-                response = json.loads(self.rfile.read(length))
-                print(f"Received POST request {response}")
-                return response
+                request = json.loads(self.rfile.read(length))
+                print(f"Received POST request {request}")
+                return request
 
             def _set_response(self):
                 self.send_response(200)
@@ -55,4 +63,3 @@ class HandlersFactory(object):
                 return concern
 
         return LogsRequestHandler
-

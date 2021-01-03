@@ -8,18 +8,14 @@ import requests
 from delay import RetryFactory
 
 
-class ReplicationService():
+class ReplicationService:
 
     def __init__(self, secondaries, args):
         self.retries_factory = RetryFactory(args)
         self.secondaries = secondaries
-        self.message_counter = 0
 
     def replicate(self, request, concern=None):
-        self.message_counter += 1
         count = CountDownLatch(concern)
-
-        request["counter"] = self.message_counter
 
         for server in self.secondaries:
             Thread(target=self.replicate_on, args=[request, server, count]).start()
@@ -28,7 +24,6 @@ class ReplicationService():
         count.await_zero()
         print(f"Finished write with concern {count.count}")
         print(f"Updated secondaries")
-
 
     def replicate_on(self, request, server, count):
         tries = 0
