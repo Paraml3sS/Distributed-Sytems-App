@@ -3,12 +3,11 @@ import json
 from urllib import parse
 from hearbeats_service import HeartbeatsService
 from replication_service import ReplicationService
-from happy_helper import append, CountUpRequest
 import threading
 
 
 logs = []
-counter = CountUpRequest(0)
+lock = threading.Lock()
 
 
 class HandlersFactory(object):
@@ -31,18 +30,19 @@ class HandlersFactory(object):
                     secondary_heartbeats = heartbeat_service.get_heartbeats()
                     self.wfile.write(json.dumps(secondary_heartbeats).encode())
                     return
-                self.wfile.write(json.dumps(logs[0:logs.index(None)]).encode())
+                self.wfile.write(json.dumps(logs).encode())
 
             def do_POST(self):
-                global counter
                 request = self._parse_request()
                 concern = self.parse_concern()
 
                 if self.check_quorum():
                     return
 
-                counter.count_up(request)
-                append(request, logs)
+                with lock:
+                    logs.append(request)
+                    request['counter'] = len(logs)
+
                 concern -= 1
 
                 print(f"Append new message: {request}")

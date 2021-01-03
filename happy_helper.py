@@ -10,13 +10,3 @@ def append(data, collection):
 
     return data
 
-
-class CountUpRequest(object):
-    def __init__(self, count=0):
-        self.count = count
-        self.lock = threading.Condition()
-
-    def count_up(self, request):
-        with self.lock:
-            self.count += 1
-            request['counter'] = self.count
