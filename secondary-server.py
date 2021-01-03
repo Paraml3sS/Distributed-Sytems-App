@@ -23,6 +23,12 @@ class SecondaryPublic(BaseHTTPRequestHandler):
 
 class SecondaryInternal(BaseHTTPRequestHandler):
 
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        print(f"Internal HEALTH check")
+        return
+
     def do_POST(self):
         content_len = int(self.headers.get('content-length'))
         post_body = self.rfile.read(content_len)

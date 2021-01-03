@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler
 import json
 from urllib import parse
+from hearbeats_service import HeartbeatsService
 from replication_service import ReplicationService
 import threading
 
@@ -12,15 +13,22 @@ counter = 0
 class HandlersFactory(object):
     def get_main(self, secondaries, arguments):
         replicator = ReplicationService(secondaries, arguments)
+        heartbeats = HeartbeatsService(secondaries, heartbeat_delay=arguments.heartbeat_delay)
 
         class LogsRequestHandler(BaseHTTPRequestHandler):
 
             def __init__(self, *args, **kwargs):
                 self.replicator = replicator
+                self.heartbeats = heartbeats
                 super(LogsRequestHandler, self).__init__(*args, **kwargs)
 
             def do_GET(self):
                 self._set_response()
+                if self.path == '/health':
+                    print(f"Checking HEALTH status")
+                    secondary_heartbeats = heartbeats.get_heartbeats()
+                    self.wfile.write(json.dumps(secondary_heartbeats).encode())
+                    return
                 self.wfile.write(json.dumps(logs).encode())
 
             def do_POST(self):
