@@ -1,10 +1,9 @@
 from http.server import BaseHTTPRequestHandler
 import json
-import requests
 from urllib import parse
+from hearbeats_service import HeartbeatsService
 from replication_service import ReplicationService
 import threading
-import time
 
 lock = threading.Condition()
 logs = []
@@ -14,24 +13,21 @@ counter = 0
 class HandlersFactory(object):
     def get_main(self, secondaries, arguments):
         replicator = ReplicationService(secondaries, arguments)
+        heartbeats = HeartbeatsService(secondaries)
 
         class LogsRequestHandler(BaseHTTPRequestHandler):
 
             def __init__(self, *args, **kwargs):
                 self.replicator = replicator
-                self.secondaries = secondaries
-                self.check_heartbeat = True
-                self.heartbeat_timeout = 30
-                t = threading.Thread(target=self.heartbeat)
-                t.start()
-                self.secondaries_status = 'Unknown'
+                self.heartbeats = heartbeats
                 super(LogsRequestHandler, self).__init__(*args, **kwargs)
 
             def do_GET(self):
                 self._set_response()
                 if self.path == '/health':
                     print(f"Checking HEALTH status")
-                    self.wfile.write(json.dumps(self.secondaries_status).encode())
+                    secondary_heartbeats = heartbeats.get_heartbeats()
+                    self.wfile.write(json.dumps(secondary_heartbeats).encode())
                     return
                 self.wfile.write(json.dumps(logs).encode())
 
@@ -73,25 +69,5 @@ class HandlersFactory(object):
                 if query.get('concern'):
                     concern = int(query.get('concern')[0])
                 return concern
-
-            def heartbeat(self):
-                while self.check_heartbeat:
-                    self.heartbeat_tick()
-                    time.sleep(self.heartbeat_timeout)
-
-            def heartbeat_tick(self):
-                responses = []
-                for s in self.secondaries:
-                    resp = requests.get(s, timeout=3)
-                    responses.append(resp.status_code)
-                if list(set(responses)) == [200]:
-                    print('Healthy')
-                    self.secondaries_status = 'Healthy'
-                elif 200 in responses:
-                    print('Suspected')
-                    self.secondaries_status = 'Suspected'
-                else:
-                    print('Unhealthy')
-                    self.secondaries_status = 'Unhealthy'
 
         return LogsRequestHandler
