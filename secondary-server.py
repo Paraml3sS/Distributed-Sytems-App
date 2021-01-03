@@ -6,6 +6,7 @@ from datetime import datetime
 from http.server import BaseHTTPRequestHandler
 
 from server import MultiServer
+from happy_helper import append
 
 
 log_messages = []
@@ -40,7 +41,7 @@ class SecondaryInternal(BaseHTTPRequestHandler):
             return
 
         self.emulate_delay(data)
-        self.append(data)
+        append(data, log_messages)
 
         if self.emulate_error('error after saving', data):
             return
@@ -53,16 +54,6 @@ class SecondaryInternal(BaseHTTPRequestHandler):
         }).encode())
         return
 
-    @staticmethod
-    def append(data):
-        current_counter = data.get('counter')
-
-        if len(log_messages) <= current_counter:
-            log_messages.extend([None] * (current_counter - len(log_messages) + 1))
-
-        log_messages[current_counter-1] = data.get('log')
-
-        return data
 
 
     def emulate_error(self, error_message, request_data):

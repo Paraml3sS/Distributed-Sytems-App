@@ -5,9 +5,9 @@ from hearbeats_service import HeartbeatsService
 from replication_service import ReplicationService
 import threading
 
-lock = threading.Condition()
+
 logs = []
-counter = 0
+lock = threading.Lock()
 
 
 class HandlersFactory(object):
@@ -33,23 +33,19 @@ class HandlersFactory(object):
                 self.wfile.write(json.dumps(logs).encode())
 
             def do_POST(self):
-                global counter
                 request = self._parse_request()
                 concern = self.parse_concern()
 
                 if self.check_quorum():
                     return
 
-                new_message = request["log"]
-
                 with lock:
-                    counter += 1
-                    request['counter'] = counter
+                    logs.append(request)
+                    request['counter'] = len(logs)
 
-                logs.append(new_message)
                 concern -= 1
 
-                print(f"Append new message: {new_message}")
+                print(f"Append new message: {request}")
                 self.replicator.replicate(request, concern)
 
                 self._set_response()
@@ -90,3 +86,4 @@ class HandlersFactory(object):
                     return True
 
         return LogsRequestHandler
+
