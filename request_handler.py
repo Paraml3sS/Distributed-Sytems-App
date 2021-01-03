@@ -13,7 +13,7 @@ counter = 0
 class HandlersFactory(object):
     def get_main(self, secondaries, arguments):
         replicator = ReplicationService(secondaries, arguments)
-        heartbeats = HeartbeatsService(secondaries)
+        heartbeats = HeartbeatsService(secondaries, heartbeat_delay=arguments.heartbeat_delay)
 
         class LogsRequestHandler(BaseHTTPRequestHandler):
 
