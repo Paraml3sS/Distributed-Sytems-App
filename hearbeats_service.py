@@ -21,6 +21,12 @@ class HeartbeatsService:
     def get_heartbeats(self):
         return self.secondaries_status
 
+    def get_live_count(self):
+        return len([(k, v) for k, v in self.secondaries_status.items() if v == 'Healthy'])
+
+    def is_alive(self, server):
+        return self.secondaries_status.get(server) == 'Healthy'
+
     def heartbeat(self, server):
         while True:
             Thread(target=self.heartbeat_tick, args=[server]).start()
