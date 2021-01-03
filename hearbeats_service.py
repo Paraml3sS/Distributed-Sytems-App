@@ -6,10 +6,10 @@ from threading import Thread
 
 class HeartbeatsService:
 
-    def __init__(self, secondaries, heartbeat_delay=60):
+    def __init__(self, secondaries, heartbeat_delay=6, heartbeat_request_timeout=3):
         self.secondaries = secondaries
         self.heartbeat_delay = heartbeat_delay
-        self.heartbeat_request_timeout = heartbeat_delay/3
+        self.heartbeat_request_timeout = heartbeat_request_timeout
         self.secondaries_status = dict()
         self.init_heartbeats()
 
@@ -23,7 +23,7 @@ class HeartbeatsService:
 
     def heartbeat(self, server):
         while True:
-            self.heartbeat_tick(server)
+            Thread(target=self.heartbeat_tick, args=[server]).start()
             time.sleep(self.heartbeat_delay)
 
     def heartbeat_tick(self, server):
@@ -43,3 +43,4 @@ class HeartbeatsService:
             current_status = 'Unhealthy'
 
         self.secondaries_status[server] = current_status
+        print(f'Detected status {current_status} for {server}')
