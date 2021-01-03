@@ -4,6 +4,7 @@ import requests
 from urllib import parse
 from replication_service import ReplicationService
 import threading
+import time
 
 lock = threading.Condition()
 logs = []
@@ -18,13 +19,20 @@ class HandlersFactory(object):
 
             def __init__(self, *args, **kwargs):
                 self.replicator = replicator
+                self.secondaries = secondaries
+                self.check_heartbeat = True
+                self.heartbeat_timeout = 30
+                t = threading.Thread(target=self.heartbeat)
+                t.start()
+                self.secondaries_status = 'Unknown'
                 super(LogsRequestHandler, self).__init__(*args, **kwargs)
 
             def do_GET(self):
                 self._set_response()
                 if self.path == '/health':
                     print(f"Checking HEALTH status")
-                    self.health_check()
+                    self.wfile.write(json.dumps(self.secondaries_status).encode())
+                    return
                 self.wfile.write(json.dumps(logs).encode())
 
             def do_POST(self):
@@ -66,16 +74,24 @@ class HandlersFactory(object):
                     concern = int(query.get('concern')[0])
                 return concern
 
-            def health_check(self):
+            def heartbeat(self):
+                while self.check_heartbeat:
+                    self.heartbeat_tick()
+                    time.sleep(self.heartbeat_timeout)
+
+            def heartbeat_tick(self):
                 responses = []
-                for s in self.replicator.secondaries:
-                    resp = requests.get(s)
+                for s in self.secondaries:
+                    resp = requests.get(s, timeout=3)
                     responses.append(resp.status_code)
                 if list(set(responses)) == [200]:
                     print('Healthy')
+                    self.secondaries_status = 'Healthy'
                 elif 200 in responses:
                     print('Suspected')
+                    self.secondaries_status = 'Suspected'
                 else:
                     print('Unhealthy')
+                    self.secondaries_status = 'Unhealthy'
 
         return LogsRequestHandler
