@@ -45,7 +45,7 @@ class HeartbeatsService:
         except requests.exceptions.ConnectionError:
             current_status = 'Suspected'
 
-        if prev_status == 'Suspected' and current_status == 'Suspected':
+        if (prev_status == 'Suspected' and current_status == 'Suspected') or (prev_status == 'Unhealthy' and current_status == 'Suspected'):
             current_status = 'Unhealthy'
 
         self.secondaries_status[server] = current_status
